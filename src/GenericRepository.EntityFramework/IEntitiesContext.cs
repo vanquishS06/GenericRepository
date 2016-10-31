@@ -10,6 +10,7 @@ namespace GenericRepository.EntityFramework
         void SetAsCreated<TEntity>(TEntity entity) where TEntity : class;
         void SetAsUpdated<TEntity>(TEntity entity) where TEntity : class;
         void SetAsDeleted<TEntity>(TEntity entity) where TEntity : class;
+        void SetAsDetached<TEntity>(TEntity entity) where TEntity : class;
 
         int SaveChanges();
     }

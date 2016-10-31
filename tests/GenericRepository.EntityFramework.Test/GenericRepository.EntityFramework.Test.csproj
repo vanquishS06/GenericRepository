@@ -56,7 +56,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EntityRepositoryTest.cs" />
-    <Compile Include="Infrastrucure\Book.cs" />
     <Compile Include="Infrastrucure\FakeDbSet.cs" />
     <Compile Include="Infrastrucure\IPeopleContext.cs" />
     <Compile Include="Infrastrucure\PeopleContext.cs" />

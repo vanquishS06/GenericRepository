@@ -6,11 +6,11 @@
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
-    <projectUrl>https://github.com/tugberkugurlu/GenericRepository</projectUrl>
-    <licenseUrl>https://raw.github.com/tugberkugurlu/GenericRepository/master/license.txt</licenseUrl>
+    <projectUrl>TBD</projectUrl>
+    <licenseUrl>TBD</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <copyright>Copyright 2012</copyright>
-    <tags>Repository GenericRepository</tags>
+    <copyright>Copyright 2016</copyright>
+    <tags>GenericRepository</tags>
   </metadata>
 </package>

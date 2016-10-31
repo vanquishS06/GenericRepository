@@ -129,6 +129,12 @@ namespace GenericRepository.EntityFramework
         }
         #endregion Set CRUD flags
 
+        public void SetAsDetached<TEntity>(TEntity entity) where TEntity : class
+        {
+            DbEntityEntry dbEntityEntry = GetDbEntityEntrySafely(entity);
+            dbEntityEntry.State = EntityState.Detached;
+        }
+
         #region Helpers
         private DbEntityEntry GetDbEntityEntrySafely<TEntity>(TEntity entity) where TEntity : class
         {

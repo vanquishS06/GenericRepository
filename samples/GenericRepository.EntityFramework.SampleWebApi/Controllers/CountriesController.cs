@@ -69,7 +69,7 @@ namespace GenericRepository.EntityFramework.SampleWebApi.Controllers {
             // Country updatedCountry = Mapper.Map<CountryRequestModel, Country>(requestModel, country);
 
             Country updatedCountry = requestModel.ToCountry(country);
-            _countryRepository.Edit(updatedCountry);
+            _countryRepository.Update(updatedCountry);
             _countryRepository.Save();
 
             CountryDto countryDto = _mapper.Map<Country, CountryDto>(country);

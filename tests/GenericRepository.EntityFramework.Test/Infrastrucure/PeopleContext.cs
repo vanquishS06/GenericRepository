@@ -12,6 +12,5 @@ namespace GenericRepository.EntityFramework.Test.Infrastrucure {
         public PeopleContext() { }
 
         public IDbSet<Person> People { get; set; }
-        public IDbSet<Book> Books { get; set; }
     }
 }

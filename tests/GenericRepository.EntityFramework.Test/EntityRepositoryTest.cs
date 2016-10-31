@@ -16,8 +16,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
-using System.Data.Entity.Validation;
-using System.Diagnostics;
+using System.Reflection;
 
 // 3rd party Libraries
 using Xunit;
@@ -25,6 +24,7 @@ using Moq;
 
 // Application Libraries
 using GenericRepository.EntityFramework.Test.Infrastrucure;
+using System.Data.Entity.Infrastructure;
 
 public static class Globals
 {
@@ -43,6 +43,7 @@ namespace GenericRepository.EntityFramework.Test
         private TextWriter tmp = null;
         private StreamWriter sw = null;
 
+        #region constructor/dispose
         /// <summary>
         /// Constructor. Create a Unit test log file
         /// </summary>
@@ -73,6 +74,7 @@ namespace GenericRepository.EntityFramework.Test
             }
             GC.SuppressFinalize(this);
         }
+        #endregion constructor/dispose
 
         #region UnitTest Read
         /// <summary>
@@ -81,32 +83,43 @@ namespace GenericRepository.EntityFramework.Test
         [Fact]
         public void TestRepositoryGetAll()
         {
-            // Change this value to test adding x number of people
-            int recordsToCreate = 2;
-
-            // Arrange
-            // 1. Create Mock dbSet
-            FakeDbSet<Person> FakeDbSet = new FakeDbSet<Person>();
-            // 2. Add records to Mock dbSet
-            IEnumerable<Person> people = AddPeopleToFakeDbSet(FakeDbSet, recordsToCreate);
-            // 3. Create Mock db context
-            Mock<IPeopleContext> MockdDbContextObject = new Mock<IPeopleContext>();
-            // 4. Create Fake Repository from Fake dbSet
-            EntityRepository<Person> repository = CreateRepository(MockdDbContextObject, FakeDbSet);
-
-            // Act
-            // Get all records from repository
-            IEnumerable<Person> peopleResult = repository.GetAll().ToList();
-
-            // Assert
-            // Set must be called
-            MockdDbContextObject.Verify(pc => pc.Set<Person>(), Times.Once());
-            // Repository count must match Mock dbSet count
-            Assert.Equal(FakeDbSet.Count(), peopleResult.Count());
-
-            // Log results.
+            // Init log
             var log = (Globals.LOG_TO_FILE == true ? sw : Console.Out);
-            log.WriteLine("{0}(): Passed - Record stored: {1}, Records read: {2}\n", System.Reflection.MethodBase.GetCurrentMethod().Name, FakeDbSet.Count(), peopleResult.Count());
+
+            try
+            {
+                // Change this value to test adding x number of people
+                int recordsToCreate = 2;
+
+                // Arrange
+                // 1. Create Mock dbSet
+                FakeDbSet<Person> FakeDbSet = new FakeDbSet<Person>();
+                // 2. Add records to Mock dbSet
+                IEnumerable<Person> people = AddPeopleToFakeDbSet(FakeDbSet, recordsToCreate);
+                // 3. Create Mock db context
+                Mock<IPeopleContext> MockdDbContextObject = new Mock<IPeopleContext>();
+                // 4. Create Fake Repository from Fake dbSet
+                EntityRepository<Person> repository = CreateRepository(MockdDbContextObject, FakeDbSet);
+
+                // Act
+                // Get all records from repository
+                IEnumerable<Person> peopleResult = repository.GetAll().ToList();
+
+                // Assert
+                // Set must be called
+                MockdDbContextObject.Verify(pc => pc.Set<Person>(), Times.Once());
+                // Repository count must match Mock dbSet count
+                Assert.Equal(FakeDbSet.Count(), peopleResult.Count());
+
+                // Log success
+                log.WriteLine("{0}(): Passed - Record stored: {1}, Records read: {2}\n", MethodBase.GetCurrentMethod().Name, FakeDbSet.Count(), peopleResult.Count());
+            }
+            //Log failure
+            catch (Exception ex)
+            {
+                // Log failure
+                log.WriteLine("{0}(): Failed - Exception: {1} Stack: {2}\n", MethodBase.GetCurrentMethod().Name, ex.GetBaseException(), ex.StackTrace);
+            }
         }
 
         /// <summary>
@@ -115,6 +128,11 @@ namespace GenericRepository.EntityFramework.Test
         [Fact]
         public void TestRepositoryGetSingle_Exist()
         {
+            // Init log
+            var log = (Globals.LOG_TO_FILE == true ? sw : Console.Out);
+
+            try
+            {
             // Change this value to test adding x number of people
             int recordsToCreate = 3;
             var IdToVerify = 2;
@@ -137,16 +155,29 @@ namespace GenericRepository.EntityFramework.Test
             MockdDbContextObject.Verify(pc => pc.Set<Person>(), Times.Once());
             Assert.Same(expectedPerson, storedPerson);
 
-            // Log results.
-            var log = (Globals.LOG_TO_FILE == true ? sw : Console.Out);
-            log.WriteLine("{0}(): Passed - Expected record Id {1} match stored record id {2}\n", System.Reflection.MethodBase.GetCurrentMethod().Name, expectedPerson.Id, storedPerson.Id);
+            // Log success
+            log.WriteLine("{0}(): Passed - Expected record Id {1} match stored record id {2}\n", MethodBase.GetCurrentMethod().Name, expectedPerson.Id, storedPerson.Id);
+            }
+            //Log failure
+            catch (Exception ex)
+            {
+                // Log failure
+                log.WriteLine("{0}(): Failed - Exception: {1} Stack: {2}\n", MethodBase.GetCurrentMethod().Name, ex.GetBaseException(), ex.StackTrace);
+            }
         }
 
+        /// <summary>
+        /// Create records once and get specific record out of range
+        /// Expect Null
+        /// </summary>
         [Fact]
-        // Create records once and get specific record out of range
-        // Expect Null
         public void TestRepositoryGetSingle_NotExist()
         {
+            // Init log
+            var log = (Globals.LOG_TO_FILE == true ? sw : Console.Out);
+
+            try
+            {
             // Change this value to test adding x number of people
             // Change this value to test adding x number of people
             int recordsToCreate = 2;
@@ -169,9 +200,15 @@ namespace GenericRepository.EntityFramework.Test
             MockdDbContextObject.Verify(pc => pc.Set<Person>(), Times.Once());
             Assert.Null(person);
 
-            // Log results.
-            var log = (Globals.LOG_TO_FILE == true ? sw : Console.Out);
-            log.WriteLine("{0}(): Passed - records created {1} record id {2} not found\n", System.Reflection.MethodBase.GetCurrentMethod().Name, people.Count(), IdToVerify);
+            // Log success
+            log.WriteLine("{0}(): Passed - records created {1} record id {2} not found\n", MethodBase.GetCurrentMethod().Name, people.Count(), IdToVerify);              
+            }
+            //Log failure
+            catch (Exception ex)
+            {
+                // Log failure
+                log.WriteLine("{0}(): Failed - Exception: {1} Stack: {2}\n", MethodBase.GetCurrentMethod().Name, ex.GetBaseException(), ex.StackTrace);
+            }
         }
         #endregion UnitTest Read
 
@@ -180,42 +217,52 @@ namespace GenericRepository.EntityFramework.Test
         /// Add a valid record Unit Test
         /// The tests must succeed by matching the store records
         /// </summary>
-        /// <Prequisite>GetAll() must be tested</Prequisite>
         [Fact]
         public void TestRepository_Add_Success()
         {
-            // Change this value to test adding x number of people
-            int recordsToCreate = 2;
+            // Init log
+            var log = (Globals.LOG_TO_FILE == true ? sw : Console.Out);
 
-            // Arrange
-            // 1. Create Mock dbSet
-            FakeDbSet<Person> FakeDbSet = new FakeDbSet<Person>();
-            // 2. Add records to Mock dbSet
-            IEnumerable<Person> people = GetFakePeople(recordsToCreate).ToList();
-            // 3. Create Mock db context
-            Mock<IPeopleContext> MockdDbContextObject = new Mock<IPeopleContext>();
-            // 4. Create Fake Repository from Fake dbSet
-            EntityRepository<Person> repository = CreateRepository(MockdDbContextObject, FakeDbSet);
+            try
+            {
+                // Change this value to test adding x number of people
+                int recordsToCreate = 2;
 
-            // Act
-            IEnumerator<Person> en = people.GetEnumerator();
-            while (en.MoveNext())
-                repository.Add(en.Current);
+                // Arrange
+                // 1. Create Mock dbSet
+                FakeDbSet<Person> FakeDbSet = new FakeDbSet<Person>();
+                // 2. Add records to Mock dbSet
+                IEnumerable<Person> recordList = GetFakePeople(recordsToCreate).ToList();
+                // 3. Create Mock db context
+                Mock<IPeopleContext> MockdDbContextObject = new Mock<IPeopleContext>();
+                // 4. Create Fake Repository from Fake dbSet
+                EntityRepository<Person> repository = CreateRepository(MockdDbContextObject, FakeDbSet);
 
-            IEnumerable<Person> StoredRecordList = repository.GetAll().ToList();
+                int addedNbOfRecord = 0;
+                int storedCount = 0;
+                IEnumerator<Person> en = recordList.GetEnumerator();
+                while (en.MoveNext())
+                {
+                    // Act
+                    Person addedRecord = repository.Add(en.Current);
+                    addedNbOfRecord++;
 
-            // Assert
-            // Repository count must match Mock dbSet count
-            Assert.Equal(FakeDbSet.Count(), StoredRecordList.Count());
+                    // Assert
+                    MockdDbContextObject.Verify(pc => pc.Set<Person>(), Times.Once());
+                    Assert.Same(addedRecord, en.Current);
+                    storedCount = repository.GetCount();
+                    Assert.Equal(addedNbOfRecord, storedCount);
+                }
 
-            //en = people.GetEnumerator();
-            //while (en.MoveNext())
-            //{
-            //    Person expected = en.Current;
-            //    //TODO: NO! get the count back only!!! this is not Unit test!!
-            //    Person storedPerson = repository.GetSingle(expected.Id);
-            //    Assert.Same(expected, storedPerson);
-            //}
+                // Log success
+                log.WriteLine("{0}(): Passed - {1} records created {2} record stored\n", MethodBase.GetCurrentMethod().Name, addedNbOfRecord, storedCount);
+            }
+            //Log failure
+            catch (Exception ex)
+            {
+                // Log failure
+                log.WriteLine("{0}(): Failed - Exception: {1} Stack: {2}\n", MethodBase.GetCurrentMethod().Name, ex.GetBaseException(), ex.StackTrace);
+            }
         }
 
         /// <summary>
@@ -225,23 +272,140 @@ namespace GenericRepository.EntityFramework.Test
         [Fact]
         public void TestRepository_Add_Failure()
         {
+            // Log results.
+            var log = (Globals.LOG_TO_FILE == true ? sw : Console.Out);
+
+            // Arrange
+             // 1. Create Mock db context
+            Mock<IPeopleContext> MockdDbContextObject = new Mock<IPeopleContext>();
+
             try
             {
-                // Arrange: Create an Empty DbSet and add a person
-                EntityRepository<Person> repository = CreateFakeDbSet(0);
-
+                // Arrange
+                // 2. Create Mock dbSet
+                FakeDbSet<Person> FakeDbSet = new FakeDbSet<Person>();
+                // 3. Create Fake Repository from Fake dbSet
+                EntityRepository<Person> repository = CreateRepository(MockdDbContextObject, FakeDbSet);
+                
                 // Act
                 repository.Add(null);
             }
+            // Assert
             catch (Exception ex)
             {
-                // Assert
-                var exType = ex.GetType();
-                Assert.Equal(exType, typeof(NullReferenceException));
+                try
+                {
+                    var exType = ex.GetType();
+                    MockdDbContextObject.Verify(pc => pc.Set<Person>(), Times.Once());
+                    Assert.Equal(exType, typeof(System.NullReferenceException));
+                    log.WriteLine("{0}(): Passed - Null records added - Null Exception raised\n", MethodBase.GetCurrentMethod().Name);
+                }
+                //Log failure
+                catch (Exception ex1)
+                {
+                    // Log failure
+                    log.WriteLine("{0}(): Failed - Exception: {1} Stack: {2}\n", MethodBase.GetCurrentMethod().Name, ex1.GetBaseException(), ex1.StackTrace);
+                }
             }
         }
         #endregion UnitTest Create
 
+        #region UnitTest Update
+        /// <summary>
+        /// Update an existing record
+        /// PRE_REQUISITE: Add() must be tested
+        /// </summary>
+        [Fact]
+        public void TestRepository_Update_Success()
+        {
+            // Log results.
+            var log = (Globals.LOG_TO_FILE == true ? sw : Console.Out);
+
+            try
+            {
+                // Change this value to test adding x number of people
+                int recordsToCreate = 1;
+                int IdToUpdate = 1;
+
+                // Arrange
+                // 1. Create Mock dbSet
+                FakeDbSet<Person> FakeDbSet = new FakeDbSet<Person>();
+                // 2. Add records to Mock dbSet
+                IEnumerable<Person> recordList = AddPeopleToFakeDbSet(FakeDbSet, recordsToCreate);
+                // 3. Create Mock db context
+                Mock<IPeopleContext> MockdDbContextObject = new Mock<IPeopleContext>();
+                // 4. Create Repository from Fake dbSet
+                EntityRepository<Person> repository = CreateRepository(MockdDbContextObject, FakeDbSet);
+                // Act
+                Person originalRecord = recordList.ElementAt(IdToUpdate-1);
+                IEnumerator<Person> en = recordList.GetEnumerator();
+                while (en.MoveNext())
+                {
+                    Person addedRecord = repository.Add(en.Current);
+                }
+                Person updatedRecord = recordList.FirstOrDefault(x => x.Id == IdToUpdate);              
+                updatedRecord.Name += "Updated";
+                Person storedPerson = repository.Update(updatedRecord);
+
+                // Assert
+                MockdDbContextObject.Verify(pc => pc.Set<Person>(), Times.Once());
+                Assert.NotSame(originalRecord, updatedRecord);
+                Assert.Same(updatedRecord, storedPerson);
+
+                // Log success
+                log.WriteLine("{0}(): Passed - record {1} updated\n", MethodBase.GetCurrentMethod().Name, IdToUpdate);
+            }
+            //Log failure
+            catch (Exception ex)
+            {
+                // Log failure
+                log.WriteLine("{0}(): Failed - Exception: {1} Stack: {2}\n", MethodBase.GetCurrentMethod().Name, ex.GetBaseException(), ex.StackTrace);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [Fact]
+        public void TestRepository_Update_Failure()
+        {
+            // Log results.
+            var log = (Globals.LOG_TO_FILE == true ? sw : Console.Out);
+            try
+            {
+                //Arrange
+                // 1. Create Mock dbSet
+                FakeDbSet<Person> FakeDbSet = new FakeDbSet<Person>();
+                // 2. Create Mock db context
+                Mock<IPeopleContext> MockdDbContextObject = new Mock<IPeopleContext>();
+                // 3. Create Repository from Fake dbSet
+                EntityRepository<Person> repository = CreateRepository(MockdDbContextObject, FakeDbSet);
+
+                //Act
+                try
+                {
+                    Person storedPerson = repository.Update(null);
+                    log.WriteLine("{0}(): Failed - Null exception not raised\n", MethodBase.GetCurrentMethod().Name);
+               }
+                // Assert
+                catch (Exception ex)
+                {
+                    var exType = ex.GetType();
+                    Assert.Equal(exType, typeof(System.NullReferenceException));
+                    log.WriteLine("{0}(): Passed - Null records added - Null Exception raised\n", MethodBase.GetCurrentMethod().Name);
+                }
+            }
+            //Log failure
+            catch (Exception ex1)
+            {
+                // Log failure
+                log.WriteLine("{0}(): Failed - Exception: {1} Stack: {2}\n", MethodBase.GetCurrentMethod().Name, ex1.GetBaseException(), ex1.StackTrace);
+            }
+        }
+
+        #endregion UnitTest Update
+
+        #region UnitTest Delete
         [Fact]
         // Delete an existing record from a range of record
         public void TestRepositoryDelete_Exist()
@@ -263,12 +427,7 @@ namespace GenericRepository.EntityFramework.Test
         {
 
         }
-
-        [Fact]
-        // Update an existing record
-        public void TestRepositoryUpdate()
-        {
-        }
+        #endregion UnitTest Delete
 
         #region Helpers
         /// <summary>

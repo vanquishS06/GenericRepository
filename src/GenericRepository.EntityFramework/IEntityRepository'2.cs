@@ -11,8 +11,8 @@ namespace GenericRepository.EntityFramework {
     /// <typeparam name="TId">Type of entity Id</typeparam>
     public interface IEntityRepository<TEntity, TId> : IRepository<TEntity, TId> 
         where TEntity : class, IEntity<TId>
-        where TId : IComparable {
-
+        where TId : IComparable
+    {
         IQueryable<TEntity> GetAllIncluding(params Expression<Func<TEntity, object>>[] includeProperties);
         TEntity GetSingleIncluding(TId id, params Expression<Func<TEntity, object>>[] includeProperties);
 
@@ -28,10 +28,12 @@ namespace GenericRepository.EntityFramework {
         PaginatedList<TEntity> PaginateDescending<TKey>(
             int pageIndex, int pageSize, Expression<Func<TEntity, TKey>> keySelector, Expression<Func<TEntity, bool>> predicate, params Expression<Func<TEntity, object>>[] includeProperties);
 
-        void Add(TEntity entity);
+        TEntity Add(TEntity entity);
         void AddGraph(TEntity entity);
-        void Edit(TEntity entity);
+        TEntity Update(TEntity entity);
         void Delete(TEntity entity);
+        int GetCount();
+        void Detach(TEntity entity);
         int Save();
     }
 }

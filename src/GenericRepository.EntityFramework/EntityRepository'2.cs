@@ -1,4 +1,16 @@
-﻿using System;
+﻿////////////////////////////////////////////////////////////////////////////////
+///
+/// Generic Repository based on:
+/// http://www.tugberkugurlu.com/archive/clean-better-and-sexier-generic-repository-implementation-for-entity-framework
+/// 
+/// Allows sharing of dbContext instance between repositories
+/// Provides generic repository interfaces
+/// Pagination support.
+/// Allows pass a fake DbContext instance into the repository implementation itself
+///
+////////////////////////////////////////////////////////////////////////////////
+
+using System;
 using System.Data.Entity;
 using System.Linq;
 using System.Linq.Expressions;
@@ -18,6 +30,10 @@ namespace GenericRepository.EntityFramework
     {
         private readonly IEntitiesContext _dbContext;
 
+        /// <summary>
+        /// Constructor 
+        /// </summary>
+        /// <param name="dbContext"></param>
         public EntityRepository(IEntitiesContext dbContext)
         {
             if (dbContext == null)
@@ -31,31 +47,22 @@ namespace GenericRepository.EntityFramework
         /// Add in Single Record in the dataSet
         /// </summary>
         /// <param name="entity">Generics dbSet type</param>
-        public void Add(TEntity entity)
+        public TEntity Add(TEntity entity)
         {
             try
             {
                 if (entity == null)
-                {
                     throw new NullReferenceException("Attempt to add a null record");
-                }
 
                 IDbSet<TEntity> dbSet = _dbContext.Set<TEntity>();
                 TEntity addedEntity = dbSet.Add(entity);
                 _dbContext.SetAsCreated(entity);
-
-                //return addedEntity;
+                return addedEntity;
             }
             catch (DbEntityValidationException dbEx)
             {
-                var msg = string.Empty;
-
-                foreach (var validationErrors in dbEx.EntityValidationErrors)
-                {
-                    foreach (var validationError in validationErrors.ValidationErrors)
-                        msg += string.Format("Property: {0} Error: {1}", validationError.PropertyName, validationError.ErrorMessage) + Environment.NewLine;
-                }
-                throw new Exception(msg, dbEx);
+                throwException(dbEx);
+                return null;
             }
         }
 
@@ -103,9 +110,20 @@ namespace GenericRepository.EntityFramework
         #endregion Read a record
 
         #region Update Records
-        public void Edit(TEntity entity)
+        public TEntity Update(TEntity entity)
         {
-            _dbContext.SetAsUpdated(entity);
+            try
+            {
+                if (entity == null)
+                    throw new ArgumentNullException("entity");
+                _dbContext.SetAsUpdated(entity);
+                return entity;
+            }
+            catch (DbEntityValidationException dbEx)
+            {
+                throwException(dbEx);
+                return null;
+            }
         }
         #endregion Update Records
 
@@ -115,7 +133,6 @@ namespace GenericRepository.EntityFramework
             _dbContext.SetAsDeleted(entity);
         }
         #endregion Delete Records
-
 
         #region Pagination
         public PaginatedList<TEntity> Paginate(int pageIndex, int pageSize)
@@ -152,6 +169,18 @@ namespace GenericRepository.EntityFramework
         }
         #endregion Pagination
 
+        public int GetCount()
+        {
+            IQueryable<TEntity> dbSet = GetAll();
+            int count = dbSet.ToList().Count();
+            return count;
+        }
+
+        public virtual void Detach(TEntity entity)
+        {
+            _dbContext.SetAsDetached<TEntity>(entity);
+        }
+
         public int Save()
         {
             return _dbContext.SaveChanges();
@@ -186,6 +215,23 @@ namespace GenericRepository.EntityFramework
                 searchExpression, new ParameterExpression[] { property.Parameters.Single() });
 
             return dbSet.Where(lambda);
+        }
+
+        /// <summary>
+        /// Throw a db Validation exception
+        /// </summary>
+        /// <param name="dbEx">exception</param>
+        private void throwException(DbEntityValidationException dbEx)
+        {
+            var msg = string.Empty;
+
+            foreach (var validationErrors in dbEx.EntityValidationErrors)
+            {
+                foreach (var validationError in validationErrors.ValidationErrors)
+                    msg += Environment.NewLine + string.Format("Property: {0} Error: {1}", validationError.PropertyName, validationError.ErrorMessage);
+            }
+            var ex = new Exception(msg, dbEx);
+            throw ex;
         }
 
         private enum OrderByType 

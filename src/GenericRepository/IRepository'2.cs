@@ -19,7 +19,9 @@ namespace GenericRepository
         IQueryable<TEntity> FindBy(Expression<Func<TEntity, bool>> predicate);
         PaginatedList<TEntity> Paginate(int pageIndex, int pageSize);
 
-        /*TEntity*/ void Add(TEntity entity);
+        TEntity Add(TEntity entity);
         TEntity GetSingle(TId id);
+
+        int GetCount();
     }
 }
